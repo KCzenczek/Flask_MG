@@ -1,1 +1,9 @@
-<h1>jinja2 says hi to {{ first_name|title}}</h1>
+{% extends "base.html" %}
+
+{% block title %} Flasky {% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1>Hello, {{ first_name}}. How are you, today?</h1>
+</div>
+{% endblock %}

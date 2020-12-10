@@ -6,9 +6,14 @@ from flask import (
     abort,
     render_template,
 )
+from flask_bootstrap import Bootstrap
+from flask_moment import Moment
+from datetime import datetime
 
 
 app = Flask(__name__)
+bootstrap = Bootstrap(app)
+moment = Moment(app)
 
 
 @app.route('/')
@@ -16,7 +21,8 @@ def index():
     # response = make_response('<h1>Hello world!</h1>')
     # response.set_cookie('reply', '42')
     # return response
-    return render_template('index.html')
+    return render_template('index.html', current_time=datetime.utcnow()
+    )
 
 
 @app.route('/user_agent')
@@ -42,6 +48,15 @@ def user(name):
     return render_template('user.html', first_name=name)
     # return '<h2>Hello, you {}</h2>'.format(name)
 
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template('500.html'), 500
 
 # @app.route('/redirect')
 # def redirection():
