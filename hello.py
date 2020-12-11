@@ -1,3 +1,4 @@
+import os
 from flask import (
     Flask,
     request,
@@ -5,23 +6,45 @@ from flask import (
     redirect,
     abort,
     render_template,
+    session,
+    url_for,
+    flash,
 )
 from flask_bootstrap import Bootstrap
 from flask_moment import Moment
 from datetime import datetime
+from flask_wtf import FlaskForm
+from wtforms import StringField, SubmitField
+from wtforms.validators import DataRequired
 
 
 app = Flask(__name__)
 bootstrap = Bootstrap(app)
 moment = Moment(app)
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY_FLASK_MG')
 
 
-@app.route('/')
+class NameForm(FlaskForm):
+    name = StringField(
+        'what is your name?',
+        validators=[DataRequired()],
+    )
+    submit = SubmitField('send')
+
+
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    # response = make_response('<h1>Hello world!</h1>')
-    # response.set_cookie('reply', '42')
-    # return response
-    return render_template('index.html', current_time=datetime.utcnow()
+    form = NameForm()
+    if form.validate_on_submit():
+        old_name = session.get('name')
+        if old_name and old_name != form.name.data:
+            flash('is that you, {}? have you change your name?'.format(old_name))
+        session['name'] = form.name.data
+        return redirect(url_for('index'))
+    return render_template(
+        'index.html',
+        form=form, name=session.get('name'),
+        current_time=datetime.utcnow(),
     )
 
 
