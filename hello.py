@@ -16,12 +16,42 @@ from datetime import datetime
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
 
+basedir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
 bootstrap = Bootstrap(app)
 moment = Moment(app)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY_FLASK_MG')
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data.sqlite')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
+
+class Role(db.Model):
+    #  one role many have many users
+    __tablename__ = 'roles'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), unique=True)
+    users = db.relationship('User', backref='role', lazy='dynamic')
+
+    def __repr__(self):
+        return '<Role %r>' % self.name
+
+
+class User(db.Model):
+    #  each user can have only one role
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    user_name = db.Column(db.String(64), unique=True, index=True)
+    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
+
+    def __repr__(self):
+        return '<User %r>' % self.user_name
 
 
 class NameForm(FlaskForm):
@@ -36,16 +66,27 @@ class NameForm(FlaskForm):
 def index():
     form = NameForm()
     if form.validate_on_submit():
-        old_name = session.get('name')
-        if old_name and old_name != form.name.data:
-            flash('is that you, {}? have you change your name?'.format(old_name))
+        user = User.query.filter_by(user_name=form.name.data).first()
+        if user is None:
+            user = User(user_name=form.name.data)
+            db.session.add(user)
+            db.session.commit()
+            session['known'] = False
+        else:
+            session['known'] = True
         session['name'] = form.name.data
+        form.name.data = ''
         return redirect(url_for('index'))
     return render_template(
         'index.html',
         form=form, name=session.get('name'),
-        current_time=datetime.utcnow(),
+        current_time=datetime.utcnow(), known=session.get('known', False)
     )
+
+
+@app.shell_context_processor
+def make_shell_context():
+    return dict(db=db, User=User, Role=Role)
 
 
 @app.route('/user_agent')
