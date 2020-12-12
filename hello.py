@@ -18,6 +18,9 @@ from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_mail import Mail
+from flask_mail import Message
+from threading import Thread
 
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -30,6 +33,15 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'da
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['FLASKY_MAIL_SENDER'] = 'Flasky admincio'
+app.config['FLASKY_ADMIN'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+mail = Mail(app)
 
 
 class Role(db.Model):
@@ -72,6 +84,13 @@ def index():
             db.session.add(user)
             db.session.commit()
             session['known'] = False
+            if app.config['FLASKY_ADMIN']:
+                send_email(
+                    app.config['FLASKY_ADMIN'],
+                    'ny gut {}'.format(form.name.data),
+                    'mail/new_user',
+                    user=user
+                )
         else:
             session['known'] = True
         session['name'] = form.name.data
@@ -82,6 +101,24 @@ def index():
         form=form, name=session.get('name'),
         current_time=datetime.utcnow(), known=session.get('known', False)
     )
+
+
+def send_async_email(app, msg):
+    with app.app_context():
+        mail.send(msg)
+
+
+def send_email(to, subject, template, **kwargs):
+    msg = Message(
+        subject,
+        sender=app.config['FLASKY_MAIL_SENDER'],
+        recipients=[to]
+    )
+    msg.body = render_template(template + '.txt', **kwargs)
+    msg.html = render_template(template + '.html', **kwargs)
+    thr = Thread(target=send_async_email, args=[app, msg])
+    thr.start()
+    return thr
 
 
 @app.shell_context_processor
@@ -133,5 +170,6 @@ def internal_server_error(e):
 #         abort(404)
 #     return 'yo man'
 
-# if __name__ == '__main__':
-#     app.run()
+
+if __name__ == '__main__':
+    app.run()
