@@ -14,6 +14,8 @@ from ..models import User
 from flask_mail import Message
 from threading import Thread
 from .. import mail
+from ..decorators import admin_required
+from flask_login import login_required
 
 
 @main.route('/', methods=['GET', 'POST'])
@@ -63,6 +65,13 @@ def send_email(to, subject, template, **kwargs):
 # def send_async_email(app, msg):
 #     with app.app_context():
 #          mail.send(msg)
+
+
+@main.route('/admin')
+@login_required
+@admin_required
+def for_admins_only():
+    return "tylko dla admisiów :)"
 
 
 @main.route('/user_agent')
