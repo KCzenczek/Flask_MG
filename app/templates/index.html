@@ -20,13 +20,25 @@
         {% else %}whoever you are
         {% endif %}!</h1>
 </div>
+<br/>
 <div>
     {% if current_user.can(Permission.WRITE) %}
     {{ wtf.quick_form(form) }}
     {% else %} no can do, bro <br/> to write, pls log in <br/><br/>
     {% endif %}
 </div>
-{% include '_posts.html' %}
+<br/>
+<div class="post-tabs">
+    <ul class="nav nav-tabs">
+        <li{% if not show_followed %} class="active"{% endif %}><a href="{{ url_for('.show_all') }}">All</a></li>
+        {% if current_user.is_authenticated %}
+        <li{% if show_followed %} class="active"{% endif %}><a href="{{ url_for('.show_followed') }}">Followers</a></li>
+        {% endif %}
+    </ul>
+    <br/>
+    {% include '_posts.html' %}
+</div>
+<br/>
 <div class="pagination">
     {{ macros.pagination_widget(pagination, '.index') }}
 </div>

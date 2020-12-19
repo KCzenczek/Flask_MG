@@ -202,7 +202,10 @@ class User(UserMixin, db.Model):
         db.session.commit()
 
     def gravatar_hash(self):
-        return hashlib.md5(self.email.lower().encode('utf-8')).hexdigest()
+        if self.email:
+            return hashlib.md5(self.email.lower().encode('utf-8')).hexdigest()
+        else:
+            return hashlib.md5('improv_no_mail_in_DB'.lower().encode('utf-8')).hexdigest()
 
     def gravatar(self, size=100, default='identicon', rating='g'):
         url = 'https://secure.gravatar.com/avatar'
@@ -231,6 +234,11 @@ class User(UserMixin, db.Model):
             return False
         return self.followers.filter_by(
             follower_id=user.id).first() is not None
+
+    @property
+    def followed_posts(self):
+        return Post.query.join(Follow, Follow.followed_id == Post.author_id) \
+            .filter(Follow.follower_id == self.id)
 
 
 class AnonymousUser(AnonymousUserMixin):
