@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
+{% import "_macros.html" as macros %}
+
 
 {% block title %} Flasky {% endblock %}
 
@@ -15,21 +17,18 @@
 <div class="page-header">
     <h1>Hello,
         {% if current_user.is_authenticated %}{{ current_user.user_name }}
-        {% else %}Stranger
+        {% else %}whoever you are
         {% endif %}!</h1>
 </div>
 <div>
-   <h1>hello,
-       {% if name %} {{ name }}
-       {% else %} you
-       {% endif %}
-   </h1>
-    {% if not known %}
-    <p>nice to meet ya</p>
-    {% else %}
-    <p>nice to see ya</p>
+    {% if current_user.can(Permission.WRITE) %}
+    {{ wtf.quick_form(form) }}
+    {% else %} no can do, bro <br/> to write, pls log in <br/><br/>
     {% endif %}
 </div>
-{{ wtf.quick_form(form) }}
+{% include '_posts.html' %}
+<div class="pagination">
+    {{ macros.pagination_widget(pagination, '.index') }}
+</div>
 {% endblock %}
 

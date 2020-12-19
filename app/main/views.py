@@ -7,11 +7,12 @@ from flask import (
     session,
     url_for,
     flash,
+    abort,
 )
 from . import main
-from .forms import NameForm, EditProfileForm, EditProfileAdminForm
+from .forms import NameForm, EditProfileForm, EditProfileAdminForm, PostForm
 from .. import db
-from ..models import User, Role
+from ..models import User, Role, Post, Permission
 from flask_mail import Message
 from threading import Thread
 from .. import mail
@@ -19,33 +20,61 @@ from ..decorators import admin_required
 from flask_login import login_required, current_user
 
 
+# @main.route('/', methods=['GET', 'POST'])
+# def index():
+#     form = NameForm()
+#     if form.validate_on_submit():
+#         user = User.query.filter_by(user_name=form.name.data).first()
+#         if user is None:
+#             user = User(user_name=form.name.data)
+#             db.session.add(user)
+#             db.session.commit()
+#             session['known'] = False
+#             if current_app.config['FLASKY_ADMIN']:
+#                 send_email(
+#                     current_app.config['FLASKY_ADMIN'],
+#                     'ny gut {}'.format(form.name.data),
+#                     'mail/new_user',
+#                     user=user
+#                 )
+#         else:
+#             session['known'] = True
+#         session['name'] = form.name.data
+#         form.name.data = ''
+#         return redirect(url_for('.index'))
+#     return render_template(
+#         'index.html',
+#         form=form, name=session.get('name'),
+#         current_time=datetime.utcnow(), known=session.get('known', False)
+#     )
+
+
 @main.route('/', methods=['GET', 'POST'])
 def index():
-    form = NameForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(user_name=form.name.data).first()
-        if user is None:
-            user = User(user_name=form.name.data)
-            db.session.add(user)
-            db.session.commit()
-            session['known'] = False
-            if current_app.config['FLASKY_ADMIN']:
-                send_email(
-                    current_app.config['FLASKY_ADMIN'],
-                    'ny gut {}'.format(form.name.data),
-                    'mail/new_user',
-                    user=user
-                )
-        else:
-            session['known'] = True
-        session['name'] = form.name.data
-        form.name.data = ''
+    form = PostForm()
+    if current_user.can(Permission.WRITE) and form.validate_on_submit():
+        post = Post(body=form.body.data,
+                    author=current_user._get_current_object())
+        db.session.add(post)
+        db.session.commit()
         return redirect(url_for('.index'))
-    return render_template(
-        'index.html',
-        form=form, name=session.get('name'),
-        current_time=datetime.utcnow(), known=session.get('known', False)
-    )
+    page = request.args.get('page', 1, type=int)
+    # show_followed = False
+    # if current_user.is_authenticated:
+    #     show_followed = bool(request.cookies.get('show_followed', ''))
+    # if show_followed:
+    #     query = current_user.followed_posts
+    # else:
+    #     query = Post.query
+    pagination = Post.query.order_by(Post.timestamp.desc()).paginate(
+        page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
+        error_out=False)
+    posts = pagination.items
+    # posts = Post.query.order_by(Post.timestamp.desc()).all()
+    return render_template('index.html', form=form, posts=posts, current_time=datetime.utcnow(),
+                           # show_followed=show_followed,
+                           pagination=pagination
+                           )
 
 
 def send_email(to, subject, template, **kwargs):
@@ -70,16 +99,19 @@ def send_email(to, subject, template, **kwargs):
 
 @main.route('/user/<user_name>')
 def user(user_name):
-    user = User.query.filter_by(user_name=user_name).first_or_404()
-    # page = request.args.get('page', 1, type=int)
-    # pagination = user.posts.order_by(Post.timestamp.desc()).paginate(
-    #     page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
-    #     error_out=False)
-    # posts = pagination.items
+    user = User.query.filter_by(user_name=user_name).first()
+    if user is None:
+        abort(404)
+    # posts = user.posts.order_by(Post.timestamp.desc()).all()
+    page = request.args.get('page', 1, type=int)
+    pagination = user.posts.order_by(Post.timestamp.desc()).paginate(
+        page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
+        error_out=False)
+    posts = pagination.items
     return render_template('user.html', user=user,
                            current_time=datetime.utcnow(),
-                           # posts=posts,
-                           # pagination=pagination
+                           posts=posts,
+                           pagination=pagination
                            )
 
 

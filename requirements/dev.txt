@@ -1,0 +1,4 @@
+-r common.txt
+
+Faker==5.0.2
+text-unidecode==1.3
