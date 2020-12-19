@@ -21,8 +21,23 @@
         {% endif %}
         {% if user.about_me %}<p>{{ user.about_me }}</p>{% endif %}
         <p>od kiedy {{ moment(user.member_since).format('L') }}.
-            ostatnio widziany {{ moment(user.last_seen).fromNow() }}.</p>
-         <p>
+            ostatnio widziany {{ moment(user.last_seen).fromNow() }}.
+        </p>
+        <p>
+            {% if current_user.can(Permission.FOLLOW) and user != current_user %}
+                {% if not current_user.is_following(user) %}
+                <a href="{{ url_for('.follow', user_name=user.user_name) }}" class="btn btn-primary">obserwuj</a>
+                {% else %}
+                <a href="{{ url_for('.unfollow', user_name=user.user_name) }}" class="btn btn-default">przestań obserwować</a>
+                {% endif %}
+            {% endif %}
+            <a href="{{ url_for('.followers', user_name=user.user_name) }}">Obserwujących: <span class="badge">{{ user.followers.count() }}</span></a>
+            <a href="{{ url_for('.followed_by', user_name=user.user_name) }}">Obserwowanych: <span class="badge">{{ user.followed.count() }}</span></a>
+            {% if current_user.is_authenticated and user != current_user and user.is_following(current_user) %}
+            | <span class="label label-default">Follows you</span>
+            {% endif %}
+        </p>
+        <p>
             {% if user == current_user %}
             <a class="btn btn-default" href="{{ url_for('.edit_profile') }}">Edit Profile</a>
             {% endif %}
