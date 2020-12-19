@@ -56,3 +56,8 @@ class EditProfileAdminForm(FlaskForm):
 class PostForm(FlaskForm):
     body = PageDownField("co by tu napisać?", validators=[DataRequired()])
     submit = SubmitField('napisane-wyślij')
+
+
+class CommentForm(FlaskForm):
+    body = StringField('fill free to comment', validators=[DataRequired()])
+    submit = SubmitField('done, wyslij')
