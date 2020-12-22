@@ -1,8 +1,8 @@
 import unittest
 import time
-from datetime import datetime
-from app import create_app, db
+from app import db
 from app.models import User, AnonymousUser, Permission
+from faker import Faker
 
 
 class UserModelTestCase(unittest.TestCase):
@@ -50,7 +50,8 @@ class UserModelTestCase(unittest.TestCase):
         self.assertFalse(u.confirm(token))
 
     def test_user_role(self):
-        u = User(email='john@example.com', password='cat')
+        fake = Faker()
+        u = User(email=fake.email(), password='cat')
         self.assertTrue(u.can(Permission.FOLLOW))
         self.assertTrue(u.can(Permission.COMMENT))
         self.assertTrue(u.can(Permission.WRITE))
