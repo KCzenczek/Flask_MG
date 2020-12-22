@@ -35,7 +35,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    flash('You have been logged out.')
+    flash('Się wylogowałeś')
     return redirect(url_for('main.index'))
 
 
@@ -63,7 +63,7 @@ def confirm(token):
         return redirect(url_for('main.index'))
     if current_user.confirm(token):
         db.session.commit()
-        flash('You have confirmed your account. Thanks!')
+        flash('potwierdziłeś konto, dzienx')
     else:
         flash('The confirmation link is invalid or has expired.')
     return redirect(url_for('main.index'))
