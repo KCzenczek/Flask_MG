@@ -4,6 +4,7 @@ from app import create_app, db
 from app.models import User, Role
 import unittest
 import click
+from flask_migrate import upgrade
 
 
 app = create_app(os.getenv('FLASK_CONFIG') or 'default')
@@ -39,6 +40,19 @@ def test(coverage, test_names):
         print('info o pokryciu kodu:')
         COV.report()
         COV.erase()
+
+
+@app.cli.command()
+def deploy():
+    """Wykonuje zadania wdrożeniowe"""
+    # Migracja DB do najnowszej wersji
+    upgrade()
+
+    # tworzenie lub aktualizowanie roli użytkowników
+    Role.insert_roles()
+
+    # spr czy wszyscy użytkownicy obserwują samych siebie
+    User.add_self_follows()
 
 
 # @app.cli.command()
