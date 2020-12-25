@@ -113,6 +113,14 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return '<User %r>' % self.user_name
 
+    @staticmethod
+    def add_self_follows():
+        for user in User.query.all():
+            if not user.is_following(user):
+                user.follow(user)
+                db.session.add(user)
+                db.session.commit()
+
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
         if self.role is None:

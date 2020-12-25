@@ -1,3 +1,4 @@
+-r common.txt
 certifi==2020.12.5
 chardet==4.0.0
 coverage==5.3.1

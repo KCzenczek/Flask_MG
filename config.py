@@ -5,6 +5,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config:
+    #  zmienne konfiguracyjne
     SECRET_KEY = os.environ.get('SECRET_KEY_FLASK_MG')
     MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
     MAIL_PORT = os.environ.get('MAIL_PORT', 587)
@@ -19,6 +20,7 @@ class Config:
     FLASKY_COMMENTS_PER_PAGE = 3
     # FLASKY_SLOW_DB_QUERY_TIME = 0.5
     FLASKY_MAIL_SUBJECT_PREFIX = '[Flasky]'
+    SSL_REDIRECT = False
 
     @staticmethod
     def init_app(app):
@@ -45,7 +47,7 @@ class ProductionConfig(Config):
     def init_app(cls, app):
         Config.init_app(app)
 
-        # email errors to the administrators
+        # błędy wysyłane do admina
         import logging
         from logging.handlers import SMTPHandler
         credentials = None
@@ -65,9 +67,29 @@ class ProductionConfig(Config):
         app.logger.addHandler(mail_handler)
 
 
+class HerokuConfig(ProductionConfig):
+    SSL_REDIRECT = True if os.environ.get('DYNO') else False
+
+    @classmethod
+    def init_app(cls, app):
+        ProductionConfig.init_app(app)
+
+        # obsługa nagłówków odwrotnego serwera proxy
+        from werkzeug.middleware.proxy_fix import ProxyFix
+        app.wsgi_app = ProxyFix(app.wsgi_app)
+
+        # zapis do stderr
+        import logging
+        from logging import StreamHandler
+        file_handler = StreamHandler()
+        file_handler.setLevel(logging.INFO)
+        app.logger.addHandler(file_handler)
+
+
 config = {
     'development': DevelopmentConfig,
     'testing': TestingConfig,
     'production': ProductionConfig,
+    'heroku': HerokuConfig,
     'default': DevelopmentConfig
 }
