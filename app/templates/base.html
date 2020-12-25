@@ -54,6 +54,7 @@
 {% endblock %}
 
 {% block content %}
+{{ form.csrf_token() }}
 <div class="container">
     {% for message in get_flashed_messages() %}
     <div class="alert alert-warning">

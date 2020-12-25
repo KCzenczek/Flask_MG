@@ -7,6 +7,7 @@ from config import config
 from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_pagedown import PageDown
+from flask_wtf.csrf import CSRFProtect
 
 
 bootstrap = Bootstrap()
@@ -15,6 +16,8 @@ moment = Moment()
 db = SQLAlchemy()
 migrate = Migrate()
 pagedown = PageDown()
+
+csrf = CSRFProtect()
 
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
@@ -32,6 +35,8 @@ def create_app(config_name):
     migrate.init_app(app, db)
     login_manager.init_app(app)
     pagedown.init_app(app)
+
+    csrf.init_app(app)
 
     if app.config['SSL_REDIRECT']:
         from flask_sslify import SSLify
