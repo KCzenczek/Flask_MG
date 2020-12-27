@@ -44,5 +44,6 @@ venv
 # Environment files
 .env
 .env-mysql
+.env-docker
 
 .idea
