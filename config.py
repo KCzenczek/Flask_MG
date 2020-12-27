@@ -6,7 +6,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
     #  zmienne konfiguracyjne
-    SECRET_KEY = os.environ.get('SECRET_KEY_FLASK_MG')
+    SECRET_KEY = os.environ.get('SECRET_KEY_FLASK_MG') or 'You1Will2Never3Guess'
     MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
     MAIL_PORT = os.environ.get('MAIL_PORT', 587)
     MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', 'on', '1']
@@ -69,7 +69,6 @@ class ProductionConfig(Config):
 
 class HerokuConfig(ProductionConfig):
     SSL_REDIRECT = True if os.environ.get('DYNO') else False
-    # WTF_CSRF_SECRET_KEY = os.environ.get('SECRET_KEY_FLASK_MG') or 'You1Will2Never3Guess_WTF'
 
     @classmethod
     def init_app(cls, app):
