@@ -6,7 +6,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
     #  zmienne konfiguracyjne
-    SECRET_KEY = os.environ.get('SECRET_KEY_FLASK_MG') or 'You1Will2Never3Guess'
+    SECRET_KEY = os.environ.get('SECRET_KEY_FLASK_MG') or str(os.getenv('SECRET_KEY'))
     MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
     MAIL_PORT = os.environ.get('MAIL_PORT', 587)
     MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', 'on', '1']
